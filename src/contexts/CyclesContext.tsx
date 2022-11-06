@@ -3,24 +3,22 @@ import React, {
   ReactNode,
   useCallback,
   useContext,
-  useMemo,
+  useEffect,
+  useReducer,
   useState,
 } from 'react'
+import {
+  addNewCycleAction,
+  finishCycleAction,
+  interruptCycleAction,
+} from '../reducers/CyclesActions'
+import { cyclesReduxer } from '../reducers/CyclesReducer'
+import { Cycle } from '../types/CyclesTypes'
 import { NewCycleFormData } from './CyclesContext.types'
-
-interface Cycle {
-  id: string
-  task: string
-  minutesAmount: number
-  startDate: Date
-  interruptedDate?: Date
-  finishedDate?: Date
-}
 
 interface CyclesContextData {
   cycles: Cycle[]
-  activeCycle?: Cycle
-  activeCycleId: string | null
+  activeCycle: Cycle | null
   finishCycle: () => void
   createNewCycle: (params: NewCycleFormData) => void
   interromptCycle: () => void
@@ -35,48 +33,23 @@ interface CyclesProviderProps {
 const CyclesContext = createContext({} as CyclesContextData)
 
 const CyclesProvider = ({ children }: CyclesProviderProps) => {
-  const [cycles, setCycles] = useState<Cycle[]>([])
-  const [activeCycleId, setActiveCycleId] = useState('')
+  const [cyclesState, dispatch] = useReducer(cyclesReduxer, {
+    cycles: [],
+    activeCycle: null,
+  })
+  const { activeCycle, cycles } = cyclesState
   const [amountsSecondsPassed, setAmountSecondsPassed] = useState(0)
 
   const finishCycle = useCallback(() => {
-    setCycles((state) =>
-      state.map((cycle) => {
-        if (cycle.id === activeCycleId) {
-          return {
-            ...cycle,
-            finishedDate: new Date(),
-          }
-        } else {
-          return cycle
-        }
-      }),
-    )
+    dispatch(finishCycleAction())
     setAmountSecondsPassed(0)
-  }, [activeCycleId])
+  }, [])
 
   const interromptCycle = () => {
-    setActiveCycleId('')
-    setCycles((state) =>
-      state.map((cycle) => {
-        if (cycle.id === activeCycleId) {
-          return {
-            ...cycle,
-            interruptedDate: new Date(),
-          }
-        } else {
-          return cycle
-        }
-      }),
-    )
+    dispatch(interruptCycleAction())
   }
 
-  const activeCycle = useMemo(() => {
-    return cycles?.find((cycle) => cycle.id === activeCycleId)
-  }, [activeCycleId, cycles])
-
   function createNewCycle(data: NewCycleFormData) {
-    console.log('teste')
     const newCycleId = new Date().getTime().toString()
     const newCycle: Cycle = {
       id: newCycleId,
@@ -84,15 +57,13 @@ const CyclesProvider = ({ children }: CyclesProviderProps) => {
       minutesAmount: data.minutesAmount,
       startDate: new Date(),
     }
-    setCycles((state) => [...state, newCycle])
-    setActiveCycleId(newCycleId)
+    dispatch(addNewCycleAction(newCycle))
     setAmountSecondsPassed(0)
   }
 
   return (
     <CyclesContext.Provider
       value={{
-        activeCycleId,
         activeCycle,
         finishCycle,
         createNewCycle,

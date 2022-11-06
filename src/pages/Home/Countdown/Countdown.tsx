@@ -6,7 +6,6 @@ import { CountdownContainer, Separator } from './Countdown.styles'
 export const Countdown: React.FC = () => {
   const {
     activeCycle,
-    activeCycleId,
     finishCycle,
     setAmountSecondsPassed,
     amountsSecondsPassed,
@@ -42,13 +41,7 @@ export const Countdown: React.FC = () => {
     return () => {
       clearInterval(interval)
     }
-  }, [
-    activeCycle,
-    activeCycleId,
-    finishCycle,
-    setAmountSecondsPassed,
-    totalInSeconds,
-  ])
+  }, [activeCycle, finishCycle, setAmountSecondsPassed, totalInSeconds])
 
   useEffect(() => {
     const minutesAmount = Math.floor(currentSeconds / 60)
